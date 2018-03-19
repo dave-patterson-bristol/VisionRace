@@ -5,13 +5,14 @@ from Image import *
 
 def SlicePart(im, images, slices):
     height, width = im.shape[:2]
-    sl = int(height/slices);
+    sl = int(height/slices)
     
     for i in range(slices):
         part = sl*i
         crop_img = im[part:part+sl, 0:width]
         images[i].image = crop_img
-        images[i].Process()
+        if (i == 1 or i == 3):
+            images[i].Process()
     
 def RepackImages(images):
     img = images[0].image
@@ -32,16 +33,38 @@ def Center(moments):
 
     return x, y
     
-def RemoveBackground(image, b):
+def RemoveBackground(image, b, cs2):
     up = 100
+
     # create NumPy arrays from the boundaries
     lower = np.array([0, 0, 0], dtype = "uint8")
     upper = np.array([up, up, up], dtype = "uint8")
+
+    hh='Hue High'
+    hl='Hue Low'
+    sh='Saturation High'
+    sl='Saturation Low'
+    vh='Value High'
+    vl='Value Low'
+
+   #read trackbar positions for all
+    hul=cv2.getTrackbarPos(hl, 'params')
+    huh=cv2.getTrackbarPos(hh, 'params')
+    sal=cv2.getTrackbarPos(sl, 'params')
+    sah=cv2.getTrackbarPos(sh, 'params')
+    val=cv2.getTrackbarPos(vl, 'params')
+    vah=cv2.getTrackbarPos(vh, 'params')
+
+    #make array for final values
+    HSVLOW=np.array([hul,sal,val])
+    HSVHIGH=np.array([huh,sah,vah])
+
     #----------------COLOR SELECTION-------------- (Remove any area that is whiter than 'upper')
     if b == True:
-        mask = cv2.inRange(image, lower, upper)
+        mask = cv2.inRange(image, HSVLOW, HSVHIGH)
         image = cv2.bitwise_and(image, image, mask = mask)
         image = cv2.bitwise_not(image, image, mask = mask)
+        #image = cv2.bitwise_not(image, image)
         image = (255-image)
         return image
     else:
